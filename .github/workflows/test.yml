@@ -1,0 +1,110 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      create:
+        description: Also create and delete a real environment (spends pool time)
+        type: boolean
+        default: false
+      bc-version:
+        description: Full BC version for the create run (bcdock artifacts list --fast-only)
+        default: ""
+      country:
+        description: Country for the create run
+        default: au
+      region:
+        description: Region for the create run (the version needs a ready image there)
+        default: australiaeast
+
+permissions:
+  contents: read
+
+jobs:
+  install-auth:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup with a valid token
+        id: good
+        uses: ./
+        with:
+          token: ${{ secrets.BCDOCK_TEST_TOKEN }}
+
+      - name: The CLI is on PATH and later steps are authenticated
+        shell: bash
+        env:
+          INSTALLED: ${{ steps.good.outputs.version }}
+        run: |
+          test -n "$INSTALLED"
+          bcdock version | grep -F "$INSTALLED"
+          bcdock auth whoami -o json > /dev/null
+
+      - name: Setup with a pinned version
+        id: pinned
+        uses: ./
+        with:
+          version: 0.5.6
+          token: ${{ secrets.BCDOCK_TEST_TOKEN }}
+
+      - name: The pinned version is the one installed
+        shell: bash
+        run: |
+          test "${{ steps.pinned.outputs.version }}" = "0.5.6"
+          # The binary on PATH, not just the output: the later install must win.
+          bcdock version | grep -E '^0\.5\.6 '
+
+      # Control: a bad token must fail the step, or the passing step above
+      # proves nothing about authentication.
+      - name: Setup with a bad token (must fail)
+        id: bad
+        continue-on-error: true
+        uses: ./
+        with:
+          token: bcd_this-token-is-not-valid
+
+      - name: The bad token failed the step
+        shell: bash
+        run: test "${{ steps.bad.outcome }}" = "failure"
+
+  create:
+    if: github.event_name == 'workflow_dispatch' && inputs.create
+    runs-on: ubuntu-latest
+    env:
+      ENV_NAME: setup-bcdock-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup and create
+        id: env
+        uses: ./
+        with:
+          token: ${{ secrets.BCDOCK_TEST_TOKEN }}
+          create: true
+          name: ${{ env.ENV_NAME }}
+          bc-version: ${{ inputs.bc-version }}
+          country: ${{ inputs.country }}
+          region: ${{ inputs.region }}
+
+      - name: Outputs are set
+        shell: bash
+        env:
+          ENV_ID: ${{ steps.env.outputs.env-id }}
+          ENV_URL: ${{ steps.env.outputs.env-url }}
+        run: |
+          test -n "$ENV_ID"
+          case "$ENV_URL" in https://*) ;; *) exit 1 ;; esac
+          echo "env-id=$ENV_ID env-url=$ENV_URL"
+
+      - name: Delete environment
+        if: always()
+        shell: bash
+        run: bcdock env delete "$ENV_NAME" --force --wait

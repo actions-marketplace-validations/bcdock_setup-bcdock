@@ -1,0 +1,81 @@
+name: Setup BCDock
+description: Install the bcdock CLI, authenticate it, and optionally create a Business Central environment.
+author: BCDock
+branding:
+  icon: box
+  color: blue
+
+inputs:
+  token:
+    description: BCDock API token (env:read + env:write). Pass it from a secret.
+    required: true
+  version:
+    description: CLI version to install, e.g. 0.5.7. Defaults to the latest release.
+    required: false
+    default: latest
+  create:
+    description: Set to true to create an environment and wait until it is running.
+    required: false
+    default: "false"
+  name:
+    description: Environment name (with create). Optional; BCDock generates one if empty.
+    required: false
+    default: ""
+  bc-version:
+    description: Full BC version (with create), e.g. 27.5.46862.55261. Find one with bcdock artifacts list --region <region> --fast-only.
+    required: false
+    default: ""
+  country:
+    description: Country localisation (with create), e.g. au, us, gb.
+    required: false
+    default: ""
+  region:
+    description: Azure region (with create), e.g. australiaeast. Optional.
+    required: false
+    default: ""
+  wait-timeout:
+    description: How long to wait for the environment to be running (with create).
+    required: false
+    default: 30m
+
+outputs:
+  version:
+    description: The CLI version that was installed.
+    value: ${{ steps.install.outputs.version }}
+  env-id:
+    description: Id of the created environment (with create).
+    value: ${{ steps.create.outputs.env-id }}
+  env-name:
+    description: Name of the created environment (with create). Use it for the delete step.
+    value: ${{ steps.create.outputs.env-name }}
+  env-url:
+    description: Web client URL of the created environment (with create).
+    value: ${{ steps.create.outputs.env-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install bcdock
+      id: install
+      shell: bash
+      env:
+        BCDOCK_VERSION: ${{ inputs.version }}
+      run: bash "$GITHUB_ACTION_PATH/install.sh"
+
+    - name: Authenticate
+      shell: bash
+      env:
+        INPUT_TOKEN: ${{ inputs.token }}
+      run: bash "$GITHUB_ACTION_PATH/auth.sh"
+
+    - name: Create environment
+      id: create
+      if: inputs.create == 'true'
+      shell: bash
+      env:
+        ENV_NAME: ${{ inputs.name }}
+        ENV_BC_VERSION: ${{ inputs.bc-version }}
+        ENV_COUNTRY: ${{ inputs.country }}
+        ENV_REGION: ${{ inputs.region }}
+        ENV_WAIT_TIMEOUT: ${{ inputs.wait-timeout }}
+      run: bash "$GITHUB_ACTION_PATH/create.sh"

@@ -1,0 +1,79 @@
+# setup-bcdock
+
+Install the [bcdock CLI](https://github.com/bcdock/cli) in a GitHub Actions job, authenticate it, and optionally create a Business Central environment for the job to test against.
+
+Runs on Linux, macOS and Windows runners (x86_64; arm64 on Linux and macOS).
+
+## Install and authenticate
+
+```yaml
+- uses: bcdock/setup-bcdock@v1
+  with:
+    token: ${{ secrets.BCDOCK_TOKEN }}
+
+- run: bcdock env list
+```
+
+The action checks the token with `bcdock auth whoami` and fails the step if it is not accepted. Later steps in the same job are authenticated: you do not pass the token again.
+
+Mint the token at [app.bcdock.io/profile/api-keys](https://app.bcdock.io/profile/api-keys) with the `env:read` and `env:write` scopes, and store it as a repository secret.
+
+## Create an environment
+
+```yaml
+- uses: bcdock/setup-bcdock@v1
+  id: bcdock
+  with:
+    token: ${{ secrets.BCDOCK_TOKEN }}
+    create: true
+    name: pr-${{ github.event.pull_request.number }}
+    bc-version: ${{ vars.BC_VERSION }}  # a full version, e.g. 27.5.46862.55261
+    country: au
+
+- run: echo "BC is at ${{ steps.bcdock.outputs.env-url }}"
+
+# ... publish your extension, run your tests ...
+
+- name: Delete environment
+  if: always()
+  run: bcdock env delete "pr-${{ github.event.pull_request.number }}" --force --wait
+```
+
+The step waits until the environment is running (about 15 minutes). If the create fails, the step fails with the CLI's exit code; see [exit codes](https://docs.bcdock.io/cli/exit-codes/).
+
+**The action never deletes what it creates.** Add the delete step yourself, with `if: always()`, and delete by the name you chose so it also cleans up after a failed create. To keep an environment between pushes, hibernate it instead: `bcdock env hibernate <name> --wait`.
+
+## Inputs
+
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `token` | yes | | BCDock API token. Pass it from a secret. |
+| `version` | no | `latest` | CLI version to install, e.g. `0.5.7`. |
+| `create` | no | `false` | Create an environment and wait until it is running. |
+| `name` | no | generated | Environment name. |
+| `bc-version` | with `create` | | Full BC version, e.g. `27.5.46862.55261`. List the ones with a ready image: `bcdock artifacts list --region <region> --fast-only`. |
+| `country` | with `create` | | Country localisation, e.g. `au`, `us`, `gb`. |
+| `region` | no | | Azure region, e.g. `australiaeast`. |
+| `wait-timeout` | no | `30m` | How long to wait for the environment to be running. |
+
+## Outputs
+
+| Output | Description |
+|---|---|
+| `version` | The CLI version installed. |
+| `env-id` | Id of the created environment. |
+| `env-name` | Name of the created environment. |
+| `env-url` | Web client URL of the created environment. |
+
+## Security
+
+The token is masked in logs and is passed to the CLI only through the environment, never on a command line. The download is checked against the release's published SHA-256 checksums before it runs.
+
+## More
+
+- [GitHub Actions guide](https://docs.bcdock.io/guides/github-actions/): a complete per-pull-request workflow.
+- [CLI reference](https://docs.bcdock.io/cli/reference/bcdock/)
+
+## License
+
+MIT
