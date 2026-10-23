@@ -10,7 +10,7 @@ inputs:
     description: BCDock API token (env:read + env:write). Pass it from a secret.
     required: true
   version:
-    description: CLI version to install, e.g. 0.5.7. Defaults to the latest release.
+    description: CLI version to install, e.g. 0.5.10. Defaults to the latest release.
     required: false
     default: latest
   create:
@@ -22,7 +22,7 @@ inputs:
     required: false
     default: ""
   bc-version:
-    description: Full BC version (with create), e.g. 27.5.46862.55261. Find one with bcdock artifacts list --region <region> --fast-only.
+    description: BC version (with create). 28.5 takes the newest ready build of 28.5, 28 the newest ready minor; a full version pins one build, which can be retired. List them with bcdock artifacts list --region <region> --fast-only.
     required: false
     default: ""
   country:

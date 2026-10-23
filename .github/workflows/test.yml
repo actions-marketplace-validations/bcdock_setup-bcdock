@@ -11,8 +11,8 @@ on:
         type: boolean
         default: false
       bc-version:
-        description: Full BC version for the create run (bcdock artifacts list --fast-only)
-        default: ""
+        description: BC version for the create run, e.g. 28.5 (bcdock artifacts list --fast-only)
+        default: "28.5"
       country:
         description: Country for the create run
         default: au

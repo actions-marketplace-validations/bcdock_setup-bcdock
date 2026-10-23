@@ -27,7 +27,7 @@ Mint the token at [app.bcdock.io/profile/api-keys](https://app.bcdock.io/profile
     token: ${{ secrets.BCDOCK_TOKEN }}
     create: true
     name: pr-${{ github.event.pull_request.number }}
-    bc-version: ${{ vars.BC_VERSION }}  # a full version, e.g. 27.5.46862.55261
+    bc-version: "28.5"  # the newest ready build of BC 28.5
     country: au
 
 - run: echo "BC is at ${{ steps.bcdock.outputs.env-url }}"
@@ -39,7 +39,7 @@ Mint the token at [app.bcdock.io/profile/api-keys](https://app.bcdock.io/profile
   run: bcdock env delete "pr-${{ github.event.pull_request.number }}" --force --wait
 ```
 
-The step waits until the environment is running (about 15 minutes). If the create fails, the step fails with the CLI's exit code; see [exit codes](https://docs.bcdock.io/cli/exit-codes/).
+The step waits until the environment is running: a few minutes when a pool is ready, about 8 to 12 when one has to start. If the create fails, the step fails with the CLI's exit code; see [exit codes](https://docs.bcdock.io/cli/exit-codes/).
 
 **The action never deletes what it creates.** Add the delete step yourself, with `if: always()`, and delete by the name you chose so it also cleans up after a failed create. To keep an environment between pushes, hibernate it instead: `bcdock env hibernate <name> --wait`.
 
@@ -48,10 +48,10 @@ The step waits until the environment is running (about 15 minutes). If the creat
 | Input | Required | Default | Description |
 |---|---|---|---|
 | `token` | yes | | BCDock API token. Pass it from a secret. |
-| `version` | no | `latest` | CLI version to install, e.g. `0.5.7`. |
+| `version` | no | `latest` | CLI version to install, e.g. `0.5.10`. A `bc-version` like `28.5` needs 0.5.10 or later. |
 | `create` | no | `false` | Create an environment and wait until it is running. |
 | `name` | no | generated | Environment name. |
-| `bc-version` | with `create` | | Full BC version, e.g. `27.5.46862.55261`. List the ones with a ready image: `bcdock artifacts list --region <region> --fast-only`. |
+| `bc-version` | with `create` | | BC version: `28.5` takes the newest ready build of 28.5, and `28` the newest ready minor of 28. Prefer these. A full version (e.g. `28.5.54151.56140`) pins one exact build, but when a newer build of the same release is ready, older builds are retired, so a pin can stop working. List what is ready: `bcdock artifacts list --region <region> --fast-only`. |
 | `country` | with `create` | | Country localisation, e.g. `au`, `us`, `gb`. |
 | `region` | no | | Azure region, e.g. `australiaeast`. |
 | `wait-timeout` | no | `30m` | How long to wait for the environment to be running. |
