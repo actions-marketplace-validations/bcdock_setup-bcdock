@@ -2,7 +2,7 @@ name: Setup BCDock
 description: Install the bcdock CLI, authenticate it, and optionally create a Business Central environment.
 author: BCDock
 branding:
-  icon: box
+  icon: anchor
   color: blue
 
 inputs:
