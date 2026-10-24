@@ -39,7 +39,7 @@ Mint the token at [app.bcdock.io/profile/api-keys](https://app.bcdock.io/profile
   run: bcdock env delete "pr-${{ github.event.pull_request.number }}" --force --wait
 ```
 
-The step waits until the environment is running: a few minutes when a pool is ready, about 8 to 12 when one has to start. If the create fails, the step fails with the CLI's exit code; see [exit codes](https://docs.bcdock.io/cli/exit-codes/).
+The step waits until the environment is running: a few minutes when a pool is ready, about 15 when one has to start. If the create fails, the step fails with the CLI's exit code; see [exit codes](https://docs.bcdock.io/cli/exit-codes/).
 
 **The action never deletes what it creates.** Add the delete step yourself, with `if: always()`, and delete by the name you chose so it also cleans up after a failed create. To keep an environment between pushes, hibernate it instead: `bcdock env hibernate <name> --wait`.
 
