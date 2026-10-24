@@ -69,6 +69,22 @@ The step waits until the environment is running: a few minutes when a pool is re
 
 The token is masked in logs and is passed to the CLI only through the environment, never on a command line. The download is checked against the release's published SHA-256 checksums before it runs.
 
+## Privacy
+
+The action sends data to one place, the BCDock API: your token, and with `create`, the environment's name, BC version, country and region. The API also sees the IP address of the runner. Nothing from GitHub is sent: no repository content, no workflow details, and no GitHub token.
+
+To install the CLI, the action downloads the release and its checksums from GitHub. Nothing is uploaded in that step.
+
+BCDock's [privacy policy](https://bcdock.io/legal/privacy-policy) covers what the API does with this data.
+
+## Terms
+
+Using the action means using BCDock, which is covered by the [BCDock Terms of Service](https://bcdock.io/legal/terms-of-service). The action's own code is MIT licensed (see License below).
+
+## Support
+
+Email [support@bcdock.io](mailto:support@bcdock.io), or [open an issue](https://github.com/bcdock/setup-bcdock/issues) on this repository.
+
 ## More
 
 - [GitHub Actions guide](https://docs.bcdock.io/guides/github-actions/): a complete per-pull-request workflow.
