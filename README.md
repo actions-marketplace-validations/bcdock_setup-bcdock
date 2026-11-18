@@ -43,6 +43,10 @@ The step waits until the environment is running: a few minutes when a pool is re
 
 **The action never deletes what it creates.** Add the delete step yourself, with `if: always()`, and delete by the name you chose so it also cleans up after a failed create. To keep an environment between pushes, hibernate it instead: `bcdock env hibernate <name> --wait`.
 
+## Cost
+
+Each environment the action creates is billed like any BCDock environment: metered per second while it runs, at the rates on [bcdock.io/pricing](https://bcdock.io/pricing). A hibernated environment bills at a much lower stored rate, and a deleted one costs nothing more, so delete or hibernate it at the end of the job.
+
 ## Inputs
 
 | Input | Required | Default | Description |
